@@ -1,18 +1,17 @@
 import { FolderGrid } from '@/components/folder-grid'
+import { LinkEditDialog } from '@/components/link-edit-dialog'
 import { LinkList } from '@/components/link-list'
 import { NavBar } from '@/components/nav-bar'
-import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog'
 import { importChromeBookmarks } from '@/services/bookmarks'
 import type { Folder, Link } from '@/services/db'
 import { db } from '@/services/db'
 import { hotkeys } from '@/services/hotkeys'
 import { fetchPageTitle } from '@/utils/fetch-title'
 import { nanoid } from 'nanoid'
-import { useEffect, useState, useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import toast from 'react-hot-toast'
-import { LinkEditDialog } from '@/components/link-edit-dialog'
 
 export default function Home() {
   const [links, setLinks] = useState<Link[]>([])

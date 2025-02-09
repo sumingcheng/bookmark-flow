@@ -3,7 +3,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Folder } from '@/services/db'
 import { useState } from 'react'
-import { useDrop, useDrag } from 'react-dnd'
+import { useDrag, useDrop } from 'react-dnd'
 import { FiEdit2, FiFolder, FiTrash2 } from 'react-icons/fi'
 
 interface FolderGridProps {

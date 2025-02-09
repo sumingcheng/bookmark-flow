@@ -1,13 +1,13 @@
+import { NavBar } from '@/components/nav-bar'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { cn } from '@/lib/utils'
+import { importChromeBookmarks } from '@/services/bookmarks'
 import { db } from '@/services/db'
+import type { ShortcutKeys } from '@/services/hotkeys'
 import { hotkeys } from '@/services/hotkeys'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { FiDownload, FiUpload, FiTrash2, FiRefreshCw } from 'react-icons/fi'
-import type { ShortcutKeys } from '@/services/hotkeys'
-import { NavBar } from '@/components/nav-bar'
-import { cn } from '@/lib/utils'
-import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog'
-import { importChromeBookmarks } from '@/services/bookmarks'
+import { FiDownload, FiRefreshCw, FiTrash2, FiUpload } from 'react-icons/fi'
 
 export default function Settings() {
   const [shortcut, setShortcut] = useState<ShortcutKeys>(hotkeys.getShortcut())
