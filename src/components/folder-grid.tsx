@@ -26,7 +26,7 @@ export function FolderGrid({
   onReorder
 }: FolderGridProps) {
   return (
-    <div className="h-2/5 min-h-[300px] bg-white border-b">
+    <div className="h-[50vh]  bg-white border-b">
       <div className="h-full flex flex-col">
         <ScrollArea className="flex-1">
           <div className="p-4">

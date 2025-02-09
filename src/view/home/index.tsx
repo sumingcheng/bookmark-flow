@@ -21,6 +21,9 @@ export default function Home() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [allTags, setAllTags] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+  const [isSearching, setIsSearching] = useState(false)
 
   // 加载初始数据
   useEffect(() => {
@@ -225,18 +228,42 @@ export default function Home() {
     }
   }
 
-  const sortedLinks = [...links].sort((a, b) => {
-    if (sortBy === 'createdAt') {
-      return b.createdAt - a.createdAt
+  // 修改排序处理函数
+  const handleSortChange = (newSortBy: 'createdAt' | 'useCount') => {
+    if (sortBy === newSortBy) {
+      setSortDirection(prev => prev === 'desc' ? 'asc' : 'desc')
+    } else {
+      setSortBy(newSortBy)
+      setSortDirection('desc')
     }
-    return b.useCount - a.useCount
+  }
+
+  const sortedLinks = [...links].sort((a, b) => {
+    const multiplier = sortDirection === 'desc' ? 1 : -1
+    if (sortBy === 'createdAt') {
+      return (b.createdAt - a.createdAt) * multiplier
+    }
+    return (b.useCount - a.useCount) * multiplier
   })
 
+  // 处理搜索
+  const handleSearch = useCallback(async (term: string) => {
+    setIsSearching(true)
+    try {
+      setSearchTerm(term)
+    } finally {
+      setIsSearching(false)
+    }
+  }, [])
+
   // 过滤链接
-  const filteredLinks = sortedLinks.filter(link => 
-    selectedTags.length === 0 || 
-    selectedTags.every(tag => link.tags.includes(tag))
-  )
+  const filteredLinks = sortedLinks.filter(link => {
+    if (!searchTerm) return true
+    return (
+      link.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      link.url.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  })
 
   useEffect(() => {
     // 注册快捷键
@@ -302,8 +329,10 @@ export default function Home() {
           links={filteredLinks}
           isLoading={isLoading}
           sortBy={sortBy}
-          onSortChange={setSortBy}
-
+          sortDirection={sortDirection}
+          onSortChange={handleSortChange}
+          onSearch={handleSearch}
+          isSearching={isSearching}
           onTagSelect={(tag: string) => {
             setSelectedTags(prev =>
               prev.includes(tag)
@@ -311,7 +340,6 @@ export default function Home() {
                 : [...prev, tag]
             )
           }}
-
           onTagsClear={() => setSelectedTags([])}
           onImport={handleImportBookmarks}
           onEdit={setEditingLink}
