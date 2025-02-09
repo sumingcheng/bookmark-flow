@@ -84,7 +84,7 @@ export function LinkEditDialog({
         <div className="flex justify-end gap-2 mt-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+            className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
           >
             取消
           </button>
@@ -93,7 +93,7 @@ export function LinkEditDialog({
               onSave(editedLink)
               onClose()
             }}
-            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors active:bg-blue-50 active:text-blue-600"
           >
             保存
           </button>

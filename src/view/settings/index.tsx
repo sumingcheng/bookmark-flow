@@ -2,11 +2,12 @@ import { db } from '@/services/db'
 import { hotkeys } from '@/services/hotkeys'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { FiDownload, FiUpload, FiTrash2 } from 'react-icons/fi'
+import { FiDownload, FiUpload, FiTrash2, FiRefreshCw } from 'react-icons/fi'
 import type { ShortcutKeys } from '@/services/hotkeys'
 import { NavBar } from '@/components/nav-bar'
 import { cn } from '@/lib/utils'
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog'
+import { importChromeBookmarks } from '@/services/bookmarks'
 
 export default function Settings() {
   const [shortcut, setShortcut] = useState<ShortcutKeys>(hotkeys.getShortcut())
@@ -144,6 +145,24 @@ export default function Settings() {
     }
   }
 
+  // 添加同步书签的处理函数
+  const handleSyncBookmarks = async () => {
+    try {
+      const { links: importedLinks, folders: importedFolders } = await importChromeBookmarks()
+      
+      // 批量添加到数据库
+      await Promise.all([
+        ...importedLinks.map(link => db.addLink(link)),
+        ...importedFolders.map(folder => db.addFolder(folder))
+      ])
+      
+      toast.success(`成功同步 ${importedLinks.length} 个书签，${importedFolders.length} 个文件夹`)
+    } catch (error) {
+      console.error('同步书签失败:', error)
+      toast.error('同步 Chrome 书签失败')
+    }
+  }
+
   return (
     <div className="min-h-full h-full bg-gray-50">
       <NavBar />
@@ -176,7 +195,7 @@ export default function Settings() {
             <button
               className={cn(
                 "px-4 py-2 text-sm font-medium rounded-md transition-colors",
-                "text-gray-700 hover:bg-gray-100",
+                "text-white hover:bg-gray-800 bg-gray-500",
                 isRecording && "text-blue-600 bg-blue-50 hover:bg-blue-100"
               )}
               onClick={() => setIsRecording(true)}
@@ -208,7 +227,42 @@ export default function Settings() {
 
         <div className="h-px bg-gray-200" />
 
-        {/* 数据管理 */}
+        {/* 书签管理 - 更新部分 */}
+        <div className="py-6">
+          <h3 className="text-lg font-medium text-gray-900">书签管理</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            管理书签数据，同步 Chrome 书签，请谨慎操作
+          </p>
+          <div className="mt-4 flex gap-3">
+            <button
+              onClick={handleSyncBookmarks}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                "bg-blue-500 text-white hover:bg-blue-600"
+              )}
+            >
+              <FiRefreshCw className="h-4 w-4" />
+              同步 Chrome 书签
+            </button>
+            <button
+              onClick={() => setShowClearConfirm(true)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                "bg-red-500 text-white hover:bg-red-600"
+              )}
+            >
+              <FiTrash2 className="h-4 w-4" />
+              清除全部数据
+            </button>
+          </div>
+          <p className="mt-3 text-sm text-amber-600">
+            同步操作会将 Chrome 书签添加到现有书签中，清除操作会删除所有书签和文件夹且不可恢复
+          </p>
+        </div>
+
+        <div className="h-px bg-gray-200" />
+
+        {/* 数据管理 - 修改后的部分 */}
         <div className="py-6">
           <h3 className="text-lg font-medium text-gray-900">数据管理</h3>
           <p className="mt-1 text-sm text-gray-500">
@@ -240,19 +294,9 @@ export default function Settings() {
                 onChange={handleImport}
               />
             </label>
-            <button
-              onClick={() => setShowClearConfirm(true)}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors",
-                "bg-red-500 text-white hover:bg-red-600"
-              )}
-            >
-              <FiTrash2 className="h-4 w-4" />
-              清除全部数据
-            </button>
           </div>
           <p className="mt-3 text-sm text-amber-600">
-            注意：导入新配置或清除数据都会删除现有的所有数据，请提前备份重要信息
+            导入新配置会覆盖现有的所有数据，请提前备份重要信息
           </p>
         </div>
       </div>
