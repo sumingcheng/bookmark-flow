@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Bookmark Manager",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "一款强大的书签管理工具，帮助你更高效地组织和管理 Chrome 书签。支持快速搜索、分类、快捷键操作等功能。",
   "permissions": [
     "bookmarks",
@@ -28,8 +28,8 @@
   "commands": {
     "_execute_action": {
       "suggested_key": {
-        "default": "Ctrl+K",
-        "mac": "Command+K"
+        "default": "Alt+K",
+        "mac": "Alt+K"
       },
       "description": "激活扩展程序"
     },
