@@ -26,9 +26,17 @@
     "128": "icons/kpbl.png"
   },
   "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Ctrl+K",
+        "mac": "Command+K"
+      },
+      "description": "激活扩展程序"
+    },
     "quick_search": {
       "suggested_key": {
-        "default": "Alt+S"
+        "default": "Alt+S",
+        "mac": "Alt+S"
       },
       "description": "快速搜索书签"
     }

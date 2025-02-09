@@ -10,21 +10,10 @@ export interface ShortcutCommand extends ShortcutKeys {
   callback: () => void
 }
 
-const DEFAULT_SHORTCUT: ShortcutCommand = {
-  key: 'S',
-  ctrl: false,
-  alt: true,
-  shift: false,
-  description: '打开搜索',
-  callback: () => { }
-}
-
 export class HotkeysManager {
   private shortcuts: ShortcutCommand[] = []
   private enabled = false
-  private shortcut: ShortcutCommand = DEFAULT_SHORTCUT
-  private callback?: () => void
-  private searchCallback?: () => void
+  private currentShortcut?: ShortcutCommand
 
   constructor() {
     this.handleKeyDown = this.handleKeyDown.bind(this)
@@ -32,12 +21,12 @@ export class HotkeysManager {
 
   async init() {
     try {
-      // 检查是否在扩展环境中
       if (typeof chrome !== 'undefined' && chrome.storage) {
+        // 只初始化自定义快捷键，不处理搜索快捷键
         const result = await chrome.storage.sync.get(['shortcuts'])
-        // ... 处理快捷键设置
-      } else {
-        console.log('非扩展环境，跳过快捷键初始化')
+        if (result.shortcuts) {
+          this.shortcuts = result.shortcuts
+        }
       }
       return this
     } catch (error) {
@@ -46,69 +35,65 @@ export class HotkeysManager {
     }
   }
 
-  setCallback(callback: () => void) {
-    this.callback = callback
+  registerShortcut(command: ShortcutCommand) {
+    this.shortcuts.push(command)
+    this.saveShortcuts()
   }
 
-  setSearchCallback(callback: () => void) {
-    this.searchCallback = callback
-  }
-
-  async updateShortcut(newShortcut: ShortcutCommand) {
-    this.shortcut = newShortcut
-    try {
-      // 存储到 chrome.storage.sync 中，键名为 'shortcut'
-      await chrome.storage.sync.set({ shortcut: newShortcut })
-    } catch (error) {
-      console.error('Failed to save shortcut settings:', error)
+  private async saveShortcuts() {
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      await chrome.storage.sync.set({ shortcuts: this.shortcuts })
     }
   }
 
-  getShortcut() {
-    return this.shortcut
-  }
-
-  registerShortcut(command: ShortcutCommand) {
-    this.shortcuts.push(command)
-  }
-
-  unregisterShortcut(key: string) {
-    this.shortcuts = this.shortcuts.filter(cmd => cmd.key !== key)
-  }
-
   private handleKeyDown(e: KeyboardEvent) {
-    // 检查所有注册的快捷键
     for (const command of this.shortcuts) {
       if (
         e.key.toLowerCase() === command.key.toLowerCase() &&
-        e.ctrlKey === !!command.ctrl &&
-        e.altKey === !!command.alt &&
-        e.shiftKey === !!command.shift
+        e.ctrlKey === command.ctrl &&
+        e.altKey === command.alt &&
+        e.shiftKey === command.shift
       ) {
         e.preventDefault()
         command.callback()
         return
       }
     }
-
-    // 检查搜索快捷键
-    if (
-      e.ctrlKey === this.shortcut.ctrl &&
-      e.altKey === this.shortcut.alt &&
-      e.shiftKey === this.shortcut.shift &&
-      e.key.toUpperCase() === this.shortcut.key
-    ) {
-      e.preventDefault()
-      this.searchCallback?.()
-    }
   }
 
   enable() {
-    window.addEventListener('keydown', this.handleKeyDown)
+    if (!this.enabled) {
+      window.addEventListener('keydown', this.handleKeyDown)
+      this.enabled = true
+    }
   }
 
   disable() {
-    window.removeEventListener('keydown', this.handleKeyDown)
+    if (this.enabled) {
+      window.removeEventListener('keydown', this.handleKeyDown)
+      this.enabled = false
+    }
+  }
+
+  unregisterShortcut(key: string) {
+    this.shortcuts = this.shortcuts.filter(cmd => cmd.key !== key)
+    this.saveShortcuts()
+  }
+
+  async updateShortcut(shortcut: ShortcutCommand) {
+    this.currentShortcut = shortcut
+    if (typeof chrome !== 'undefined' && chrome.storage) {
+      await chrome.storage.sync.set({ shortcut: shortcut })
+    }
+  }
+
+  getShortcut(): ShortcutKeys {
+    return this.currentShortcut || {
+      ctrl: false,
+      alt: true,
+      shift: false,
+      key: 'S'
+    }
   }
 }
 

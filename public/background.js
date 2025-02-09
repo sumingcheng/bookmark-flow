@@ -29,26 +29,25 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // 监听快捷键命令
 chrome.commands.onCommand.addListener((command) => {
-  if (command === 'quick_search') {
-    // 打开搜索弹窗
+  if (command === 'quick_search' || command === '_execute_action') {
     chrome.windows.create({
       url: 'index.html#/search',
       type: 'popup',
-      width: 600,
-      height: 400,
-      focused: true
+      width: 800,
+      height: 600,
+      focused: true,
     });
   }
 });
 
-// 监听右键菜单点击
+// 修改右键菜单点击处理器，保持一致的窗口大小
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === 'quick-search') {
     chrome.windows.create({
       url: 'index.html#/search',
       type: 'popup',
-      width: 600,
-      height: 400,
+      width: 800,
+      height: 600,
       focused: true
     });
   }
