@@ -67,17 +67,17 @@ export function SearchDialog({ isOpen, onClose, onLinkClick }: SearchDialogProps
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-start justify-center pt-[20vh] z-50">
+    <div className="fixed inset-0 bg-black/30 flex items-start justify-center pt-[20vh] z-50">
       <div 
-        className="bg-white rounded-lg shadow-xl w-full max-w-2xl"
+        className="bg-white rounded-lg shadow-xl w-full max-w-2xl border border-gray-200"
         onKeyDown={handleKeyDown}
       >
         {/* 搜索输入框 */}
-        <div className="flex items-center p-4">
-          <FiSearch className="text-gray-400 mr-3" size={20} />
+        <div className="flex items-center p-4 border-gray-100">
+          <FiSearch className="text-black mr-3" size={20} />
           <input
             type="text"
-            className="flex-1 outline-none text-lg"
+            className="flex-1 outline-none text-lg text-black placeholder:text-gray-500"
             placeholder="输入书签名称或者网址..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
@@ -93,18 +93,20 @@ export function SearchDialog({ isOpen, onClose, onLinkClick }: SearchDialogProps
                 <div
                   key={link.id}
                   className={`flex items-center gap-3 px-4 py-2 cursor-pointer hover:bg-gray-50 ${
-                    index === selectedIndex ? 'bg-blue-50' : ''
+                    index === selectedIndex ? 'bg-blue-50/70' : ''
                   }`}
                   onClick={() => handleLinkClick(link)}
                 >
-                  <FiExternalLink className="text-gray-400" />
+                  <FiExternalLink className="text-black" />
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{link.name}</div>
-                    <div className="text-sm text-gray-500 truncate">
+                    <div className="font-medium text-black truncate">
+                      {link.name}
+                    </div>
+                    <div className="text-sm text-black truncate">
                       {link.url}
                     </div>
                     {link.notes && (
-                      <div className="text-sm text-gray-400 truncate">
+                      <div className="text-sm text-black/80 truncate">
                         {link.notes}
                       </div>
                     )}
@@ -114,7 +116,7 @@ export function SearchDialog({ isOpen, onClose, onLinkClick }: SearchDialogProps
                       {link.tags.map(tag => (
                         <span
                           key={tag}
-                          className="px-2 py-0.5 text-xs bg-gray-100 rounded"
+                          className="px-2 py-0.5 text-xs text-black bg-gray-100 rounded-full"
                         >
                           {tag}
                         </span>
@@ -125,7 +127,7 @@ export function SearchDialog({ isOpen, onClose, onLinkClick }: SearchDialogProps
               ))}
             </div>
           ) : searchTerm ? (
-            <div className="p-4 text-center text-gray-500">
+            <div className="p-4 text-center text-black">
               未找到匹配的链接
             </div>
           ) : null}
