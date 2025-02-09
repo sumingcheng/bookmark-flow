@@ -1,7 +1,6 @@
 import { FolderGrid } from '@/components/folder-grid'
 import { LinkList } from '@/components/link-list'
 import { NavBar } from '@/components/nav-bar'
-import { SearchDialog } from '@/components/search-dialog'
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog'
 import { importChromeBookmarks } from '@/services/bookmarks'
 import type { Folder, Link } from '@/services/db'
@@ -22,7 +21,6 @@ export default function Home() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [allTags, setAllTags] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   // 加载初始数据
   useEffect(() => {
@@ -246,19 +244,8 @@ export default function Home() {
       }
     })
 
-    // 添加搜索框快捷键
-    hotkeys.registerShortcut({
-      key: 'f',
-      ctrl: true,
-      alt: true,
-      shift: false,
-      description: '打开搜索',
-      callback: () => setIsSearchOpen(true)
-    })
-
     return () => {
       hotkeys.unregisterShortcut('n')
-      hotkeys.unregisterShortcut('f')
     }
   }, [handleAddLink])
 
@@ -304,13 +291,6 @@ export default function Home() {
           isOpen={!!editingLink}
           onClose={() => setEditingLink(null)}
           onSave={handleSaveLink}
-        />
-        
-        {/* 添加搜索框组件 */}
-        <SearchDialog 
-          isOpen={isSearchOpen}
-          onClose={() => setIsSearchOpen(false)}
-          onLinkClick={handleLinkClick}
         />
       </div>
     </DndProvider>
