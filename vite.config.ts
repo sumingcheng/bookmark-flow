@@ -8,6 +8,7 @@ export default defineConfig({
     AutoImport({
       imports: [
         'react',
+        'react-router-dom',
       ],
       dts: 'src/auto-imports.d.ts',
       eslintrc: {
