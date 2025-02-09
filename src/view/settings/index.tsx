@@ -20,10 +20,15 @@ export default function Settings() {
 
     e.preventDefault()
 
+    // 忽略单独的修饰键
+    if (['Control', 'Alt', 'Shift'].includes(e.key)) {
+      return
+    }
+
     // 只记录修饰键(Ctrl/Alt/Shift)和一个普通键
     const modifierCount = Number(e.ctrlKey) + Number(e.altKey) + Number(e.shiftKey)
     if (modifierCount > 2) {
-      toast.error('最多支持两个修饰键加一个普通键的组合')
+      toast.error('最多支持两个修饰键 (Ctrl/Alt/Shift) 加一个字母键的组合')
       return
     }
 
@@ -33,8 +38,9 @@ export default function Settings() {
       return
     }
 
-    // 忽略单独的修饰键
-    if (['Control', 'Alt', 'Shift'].includes(e.key)) {
+    // 验证是否是有效的字母键
+    if (!/^[a-zA-Z]$/.test(e.key)) {
+      toast.error('请使用字母键作为快捷键的最后一个按键')
       return
     }
 

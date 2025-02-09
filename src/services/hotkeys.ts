@@ -11,11 +11,11 @@ export interface ShortcutCommand extends ShortcutKeys {
 }
 
 const DEFAULT_SHORTCUT: ShortcutCommand = {
-  key: 'F',
-  ctrl: true,
+  key: 'S',
+  ctrl: false,
   alt: true,
   shift: false,
-  description: '默认快捷键',
+  description: '打开搜索',
   callback: () => { }
 }
 
