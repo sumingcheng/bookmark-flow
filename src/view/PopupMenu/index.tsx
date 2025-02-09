@@ -14,7 +14,7 @@ export function PopupMenu() {
   return (
     <Root className="w-64 bg-white font-sans overflow-hidden animate-in fade-in duration-200">
       <List className="flex flex-col">
-        <Item>
+        {/* <Item>
           <Trigger
             onClick={() => openPage('/home')}
             className="w-full flex items-center px-4 py-3 text-sm text-gray-700 transition-colors hover:bg-gray-50 border-b border-gray-100"
@@ -22,7 +22,7 @@ export function PopupMenu() {
             <FiBookmark className="w-4 h-4 mr-3" />
             <span>管理书签</span>
           </Trigger>
-        </Item>
+        </Item> */}
 
         <Item>
           <Trigger

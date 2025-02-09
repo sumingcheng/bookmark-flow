@@ -26,12 +26,6 @@
     "128": "icons/kpbl.png"
   },
   "commands": {
-    "_execute_action": {
-      "suggested_key": {
-        "default": "Alt+B"
-      },
-      "description": "打开书签管理器"
-    },
     "quick_search": {
       "suggested_key": {
         "default": "Alt+S"
