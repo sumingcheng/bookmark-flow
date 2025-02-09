@@ -74,4 +74,63 @@ function traverseBookmarks(
       traverseBookmarks(child, result)
     })
   }
+}
+
+export interface Bookmark {
+  id: string
+  title: string
+  url?: string
+  dateAdded?: number
+  parentId?: string
+}
+
+export const bookmarkService = {
+  async getAllBookmarks(): Promise<Bookmark[]> {
+    return new Promise((resolve, reject) => {
+      try {
+        chrome.bookmarks.getTree((bookmarkTreeNodes) => {
+          const bookmarks: Bookmark[] = []
+          
+          function traverseBookmarks(node: chrome.bookmarks.BookmarkTreeNode) {
+            if (node.url) {
+              bookmarks.push({
+                id: node.id,
+                title: node.title,
+                url: node.url,
+                dateAdded: node.dateAdded,
+                parentId: node.parentId
+              })
+            }
+            if (node.children) {
+              node.children.forEach(traverseBookmarks)
+            }
+          }
+          
+          bookmarkTreeNodes.forEach(traverseBookmarks)
+          resolve(bookmarks)
+        })
+      } catch (error) {
+        reject(error)
+      }
+    })
+  },
+
+  async searchBookmarks(query: string): Promise<Bookmark[]> {
+    return new Promise((resolve, reject) => {
+      try {
+        chrome.bookmarks.search(query, (results) => {
+          const bookmarks: Bookmark[] = results.map(node => ({
+            id: node.id,
+            title: node.title,
+            url: node.url,
+            dateAdded: node.dateAdded,
+            parentId: node.parentId
+          }))
+          resolve(bookmarks)
+        })
+      } catch (error) {
+        reject(error)
+      }
+    })
+  }
 } 

@@ -129,7 +129,7 @@ export default function Settings() {
   }
 
   return (
-    <>
+    <div className="min-h-full h-full bg-gray-50">
       <NavBar />
       <div className="max-w-2xl mx-auto p-6">
         {/* 快捷键设置 */}
@@ -230,6 +230,6 @@ export default function Settings() {
           </p>
         </div>
       </div>
-    </>
+    </div>
   )
 }

@@ -1,0 +1,78 @@
+.root {
+  width: 256px;
+  padding: 0.5rem;
+  background-color: white;
+  font-family: system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+
+  // 移除滚动条
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  border-radius: 0.375rem;
+  color: #374151;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: #f3f4f6;
+  }
+
+  &:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: #e5e7eb;
+  }
+}
+
+.icon {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.75rem;
+}
+
+.footer {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.brand {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+// 动画效果
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.root {
+  animation: fadeIn 0.2s ease-out;
+}
+
+// 确保内容不会超出弹出窗口
+:global(.min-h-screen) {
+  min-height: unset !important;
+  height: auto;
+} 
