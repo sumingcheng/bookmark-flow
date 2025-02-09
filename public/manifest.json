@@ -45,7 +45,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "index.html"
+        "index.html",
+        "assets/*"
       ],
       "matches": [
         "<all_urls>"

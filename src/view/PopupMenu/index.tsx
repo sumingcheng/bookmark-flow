@@ -1,7 +1,7 @@
 import { Item, List, Root, Trigger } from '@radix-ui/react-navigation-menu'
 import { FiBookmark, FiSettings } from 'react-icons/fi'
 
-export function PopupMenu() {
+function PopupMenu() {
   const openPage = (path: string) => {
     // 在新标签页中打开完整页面
     chrome.tabs.create({ 
@@ -42,3 +42,5 @@ export function PopupMenu() {
     </Root>
   )
 } 
+
+export default PopupMenu

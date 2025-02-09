@@ -32,12 +32,17 @@ export class HotkeysManager {
 
   async init() {
     try {
-      // 从 chrome.storage.sync 中读取，键名为 'shortcut'
-      const stored = await chrome.storage.sync.get('shortcut')
-      return stored.shortcut || DEFAULT_SHORTCUT
+      // 检查是否在扩展环境中
+      if (typeof chrome !== 'undefined' && chrome.storage) {
+        const result = await chrome.storage.sync.get(['shortcuts'])
+        // ... 处理快捷键设置
+      } else {
+        console.log('非扩展环境，跳过快捷键初始化')
+      }
+      return this
     } catch (error) {
-      console.error('Failed to load shortcut settings:', error)
-      return DEFAULT_SHORTCUT
+      console.error('初始化快捷键失败:', error)
+      return this
     }
   }
 

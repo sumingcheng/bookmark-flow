@@ -1,19 +1,20 @@
-import { SearchDialog } from '@/components/search-dialog'
-import { db } from '@/services/db'
 import { hotkeys } from '@/services/hotkeys'
-import { useEffect, useState } from 'react'
-import { useRoutes } from 'react-router-dom'
-import { routes } from '@/router'
+import { useEffect } from 'react'
+import { PropsWithChildren } from 'react'
 
-function App() {
-  const [isSearchOpen, setIsSearchOpen] = useState(false)
-  const element = useRoutes(routes)
-
+function App({ children }: PropsWithChildren) {
   useEffect(() => {
-    hotkeys.init().then(() => {
-      hotkeys.setSearchCallback(() => setIsSearchOpen(true))
-      hotkeys.enable()
-    })
+    // 使用 try-catch 包装快捷键初始化
+    const initHotkeys = async () => {
+      try {
+        await hotkeys.init()
+        hotkeys.enable()
+      } catch (error) {
+        console.error('快捷键初始化失败:', error)
+      }
+    }
+
+    initHotkeys()
 
     return () => {
       hotkeys.disable()
@@ -22,19 +23,7 @@ function App() {
 
   return (
     <div className="min-h-full h-full bg-gray-50">
-      {element}
-
-      <SearchDialog
-        isOpen={isSearchOpen}
-        onClose={() => setIsSearchOpen(false)}
-        onLinkClick={async (linkId) => {
-          try {
-            await db.incrementLinkUseCount(linkId)
-          } catch (error) {
-            console.error('更新使用次数失败:', error)
-          }
-        }}
-      />
+      {children}
     </div>
   )
 }
