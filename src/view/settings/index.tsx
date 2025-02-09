@@ -260,7 +260,7 @@ export default function Settings() {
       {/* 清除确认对话框 */}
       <Dialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
         <DialogContent>
-          <DialogHeader className="font-medium">确认清除全部数据？</DialogHeader>
+          <h2 className="text-lg font-medium text-black mb-4">确认清除全部数据？</h2>
           <div className="py-4">
             <p className="text-gray-500">
               此操作将永久删除所有书签、文件夹和标签数据，且无法恢复。
@@ -268,6 +268,7 @@ export default function Settings() {
             <p className="mt-2 text-amber-600 font-medium">
               建议在清除前先导出备份。
             </p>
+
           </div>
           <div className="flex justify-end mt-4">
             <div className="flex gap-2">
