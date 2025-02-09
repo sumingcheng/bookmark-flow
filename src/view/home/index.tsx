@@ -1,10 +1,6 @@
-import { Badge } from '@/components/ui/badge'
-import { ContextMenuItem, ContextMenuRoot } from '@/components/ui/context-menu'
+import { FolderGrid } from '@/components/folder-grid'
+import { LinkList } from '@/components/link-list'
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
-import { Skeleton } from '@/components/ui/skeleton'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { importChromeBookmarks } from '@/services/bookmarks'
 import type { Folder, Link } from '@/services/db'
 import { db } from '@/services/db'
@@ -12,20 +8,10 @@ import { hotkeys } from '@/services/hotkeys'
 import { fetchPageTitle } from '@/utils/fetch-title'
 import { nanoid } from 'nanoid'
 import { useEffect, useState } from 'react'
-import { DndProvider, useDrag, useDrop } from 'react-dnd'
+import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import toast from 'react-hot-toast'
-import { FiDownload, FiEdit2, FiFilter, FiFolder, FiLink, FiPlus, FiTrash2 } from 'react-icons/fi'
-
-// 添加拖拽类型常量
-const ItemTypes = {
-  LINK: 'link'
-} as const
-
-interface DragItem {
-  id: string
-  type: typeof ItemTypes.LINK
-}
+import { NavBar } from '@/components/nav-bar'
 
 export default function Home() {
   const [links, setLinks] = useState<Link[]>([])
@@ -112,7 +98,8 @@ export default function Home() {
         name: '新建文件夹',
         parentId,
         children: [],
-        links: []
+        links: [],
+        createdAt: Date.now()
       }
       await db.addFolder(newFolder)
       setFolders(prev => [...prev, newFolder])
@@ -190,8 +177,6 @@ export default function Home() {
 
   // 删除文件夹
   const handleDeleteFolder = async (folderId: string) => {
-    if (!window.confirm('确定要删除这个文件夹吗？')) return
-
     try {
       // 递归获取所有子文件夹ID
       const getChildFolderIds = (parentId: string): string[] => {
@@ -275,169 +260,38 @@ export default function Home() {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="flex flex-col h-screen bg-gray-50">
-        {/* 文件夹区域 (上方) */}
-        <div className="h-2/5 min-h-[300px] bg-white border-b">
-          <div className="h-full flex flex-col">
-            <div className="p-4 border-b">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-800">位置</h2>
-                <button
-                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-                  onClick={() => handleAddFolder()}
-                >
-                  <FiPlus /> 新建
-                </button>
-              </div>
-            </div>
+        <NavBar />
+        <FolderGrid
+          folders={folders
+            .filter(folder => !folder.parentId)
+            .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+          }
+          isLoading={isLoading}
+          onAddFolder={() => handleAddFolder()}
+          onRename={handleRename}
+          onDelete={handleDeleteFolder}
+          onDrop={handleDrop}
+        />
 
-            <ScrollArea className="flex-1">
-              <div className="p-4">
-                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                  {isLoading ? (
-                    // 骨架屏
-                    Array.from({ length: 6 }).map((_, index) => (
-                      <div key={index} className="aspect-square border rounded-lg p-4 flex flex-col items-center justify-center gap-2">
-                        <Skeleton className="h-12 w-12 rounded-full" />
-                        <Skeleton className="h-4 w-24" />
-                      </div>
-                    ))
-                  ) : folders.filter(folder => !folder.parentId).length > 0 ? (
-                    folders
-                      .filter(folder => !folder.parentId)
-                      .map(folder => (
-                        <FolderItem
-                          key={folder.id}
-                          folder={folder}
-                          folders={folders}
-                          level={0}
-                          onDrop={handleDrop}
-                          onRename={handleRename}
-                          onDelete={handleDeleteFolder}
-                        />
-                      ))
-                  ) : (
-                    <button
-                      onClick={() => handleAddFolder()}
-                      className="aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
-                    >
-                      <FiPlus size={24} />
-                      <span>点击创建新位置</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </ScrollArea>
-          </div>
-        </div>
+        <LinkList
+          links={filteredLinks}
+          isLoading={isLoading}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
 
-        {/* 链接库区域 (下方) */}
-        <div className="flex-1 bg-white">
-          <div className="h-full flex flex-col">
-            <div className="p-4 border-b">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gray-800">链接库</h2>
-                <div className="flex gap-2">
-                  <button
-                    className={`px-3 py-1.5 rounded-md transition-colors ${
-                      sortBy === 'createdAt' 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                    onClick={() => setSortBy('createdAt')}
-                  >
-                    按时间
-                  </button>
-                  <button
-                    className={`px-3 py-1.5 rounded-md transition-colors ${
-                      sortBy === 'useCount' 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                    onClick={() => setSortBy('useCount')}
-                  >
-                    按使用频率
-                  </button>
-                  <button
-                    className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
-                    onClick={handleImportBookmarks}
-                  >
-                    <FiDownload /> 导入书签
-                  </button>
-                </div>
-              </div>
+          onTagSelect={(tag: string) => {
+            setSelectedTags(prev =>
+              prev.includes(tag)
+                ? prev.filter(t => t !== tag)
+                : [...prev, tag]
+            )
+          }}
 
-              {/* 标签过滤器 */}
-              {allTags.length > 0 && (
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <FiFilter className="text-gray-500" />
-                    <span className="text-sm font-medium text-gray-600">标签过滤</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {allTags.map(tag => (
-                      <button
-                        key={tag}
-                        className={`px-2 py-1 text-sm rounded-md transition-colors ${
-                          selectedTags.includes(tag)
-                            ? 'bg-blue-500 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                        }`}
-                        onClick={() => {
-                          setSelectedTags(prev =>
-                            prev.includes(tag)
-                              ? prev.filter(t => t !== tag)
-                              : [...prev, tag]
-                          )
-                        }}
-                      >
-                        {tag}
-                      </button>
-                    ))}
-                    {selectedTags.length > 0 && (
-                      <button
-                        className="px-2 py-1 text-sm text-gray-500 hover:text-gray-700"
-                        onClick={() => setSelectedTags([])}
-                      >
-                        清除
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <ScrollArea className="flex-1">
-              <div className="p-4 space-y-2">
-                {isLoading ? (
-                  // 骨架屏
-                  Array.from({ length: 5 }).map((_, index) => (
-                    <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
-                      <Skeleton className="h-5 w-5" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-3 w-1/2" />
-                      </div>
-                      <Skeleton className="h-6 w-16" />
-                    </div>
-                  ))
-                ) : filteredLinks.length > 0 ? (
-                  filteredLinks.map(link => (
-                    <LinkItem
-                      key={link.id}
-                      link={link}
-                      onEdit={setEditingLink}
-                      onDelete={handleDeleteLink}
-                    />
-                  ))
-                ) : (
-                  <div className="text-center text-gray-500 py-8">
-                    暂无链接
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-          </div>
-        </div>
+          onTagsClear={() => setSelectedTags([])}
+          onImport={handleImportBookmarks}
+          onEdit={setEditingLink}
+          onDelete={handleDeleteLink}
+        />
 
         <LinkEditDialog
           link={editingLink}
@@ -447,208 +301,6 @@ export default function Home() {
         />
       </div>
     </DndProvider>
-  )
-}
-
-// 链接项组件
-function LinkItem({
-  link,
-  onEdit,
-  onDelete
-}: {
-  link: Link
-  onEdit: (link: Link) => void
-  onDelete: (id: string) => void
-}) {
-  const [{ isDragging }, drag] = useDrag<DragItem, unknown, { isDragging: boolean }>(() => ({
-    type: ItemTypes.LINK,
-    item: { id: link.id, type: ItemTypes.LINK },
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging()
-    })
-  }))
-
-  return (
-    <TooltipProvider>
-      <div
-        ref={drag}
-        className={`group flex items-center gap-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors ${
-          isDragging ? 'opacity-50' : ''
-        }`}
-      >
-        <div className="flex items-center gap-3 flex-1 min-w-0">
-          <FiLink className="text-gray-400 flex-shrink-0" />
-          <div className="flex-1 min-w-0">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="font-medium text-gray-800 truncate">
-                  {link.name}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                {link.name}
-              </TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="text-sm text-gray-500 truncate">
-                  {link.url}
-                </div>
-              </TooltipTrigger>
-              <TooltipContent side="top">
-                {link.url}
-              </TooltipContent>
-            </Tooltip>
-            {link.notes && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="text-sm text-gray-400 truncate">
-                    {link.notes}
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top">
-                  {link.notes}
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-        </div>
-
-        {link.tags.length > 0 && (
-          <>
-            <Separator orientation="vertical" className="h-8" />
-            <div className="flex gap-1 flex-shrink-0">
-              {link.tags.map(tag => (
-                <Badge key={tag} variant="secondary">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-          </>
-        )}
-
-        <div className="flex gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                className="p-1.5 text-gray-400 hover:text-blue-500 rounded-md transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onEdit(link)
-                }}
-              >
-                <FiEdit2 size={16} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="top">编辑</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                className="p-1.5 text-gray-400 hover:text-red-500 rounded-md transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onDelete(link.id)
-                }}
-              >
-                <FiTrash2 size={16} />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="top">删除</TooltipContent>
-          </Tooltip>
-        </div>
-      </div>
-    </TooltipProvider>
-  )
-}
-
-// 文件夹项组件
-function FolderItem({
-  folder,
-  folders,
-  level,
-  onDrop,
-  onRename,
-  onDelete
-}: {
-  folder: Folder
-  folders: Folder[]
-  level: number
-  onDrop: (folderId: string, linkId: string) => void
-  onRename: (folderId: string, newName: string) => void
-  onDelete: (folderId: string) => void
-}) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [newName, setNewName] = useState(folder.name)
-
-  const [{ isOver }, drop] = useDrop(() => ({
-    accept: ItemTypes.LINK,
-    drop: (item: { id: string }) => {
-      onDrop(folder.id, item.id)
-    },
-    collect: (monitor) => ({
-      isOver: monitor.isOver()
-    })
-  }))
-
-  const handleRename = () => {
-    if (newName.trim() && newName.length <= 20) {
-      onRename(folder.id, newName.trim())
-      setIsEditing(false)
-    }
-  }
-
-  return (
-    <ContextMenuRoot
-      content={
-        <>
-          <ContextMenuItem
-            className="flex items-center px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-100 cursor-pointer"
-            onSelect={() => setIsEditing(true)}
-          >
-            <FiEdit2 className="mr-2" size={14} />
-            重命名
-          </ContextMenuItem>
-          <ContextMenuItem
-            className="flex items-center px-2 py-1.5 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
-            onSelect={() => onDelete(folder.id)}
-          >
-            <FiTrash2 className="mr-2" size={14} />
-            删除
-          </ContextMenuItem>
-        </>
-      }
-    >
-      <div
-        ref={drop}
-        className={`w-24 h-24 border rounded-lg p-3 flex flex-col items-center justify-center gap-2 transition-colors ${
-          isOver ? 'bg-blue-50' : 'hover:bg-gray-50'
-        }`}
-      >
-        {isEditing ? (
-          <input
-            type="text"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onBlur={handleRename}
-            onKeyDown={(e) => e.key === 'Enter' && handleRename()}
-            className="w-full px-2 py-1 text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-            maxLength={20}
-            autoFocus
-          />
-        ) : (
-          <>
-            <FiFolder className="w-8 h-8 text-blue-500" />
-            <span 
-              className="text-gray-700 text-center truncate w-full text-sm" 
-              onDoubleClick={() => setIsEditing(true)}
-            >
-              {folder.name}
-            </span>
-          </>
-        )}
-      </div>
-    </ContextMenuRoot>
   )
 }
 

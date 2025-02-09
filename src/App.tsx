@@ -3,7 +3,6 @@ import { Routes, Route } from 'react-router-dom'
 import Home from '@/view/home'
 import Settings from '@/view/settings'
 import { SearchDialog } from '@/components/search-dialog'
-import { NavBar } from '@/components/nav-bar'
 import { hotkeys } from '@/services/hotkeys'
 
 export default function App() {
@@ -23,7 +22,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <NavBar />
       <main>
         <Routes>
           <Route path="/" element={<Home />} />

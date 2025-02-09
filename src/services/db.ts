@@ -16,6 +16,7 @@ export interface Folder {
   parentId?: string
   children: string[]
   links: string[]
+  createdAt: number
 }
 
 export class BookmarkDB extends Dexie {

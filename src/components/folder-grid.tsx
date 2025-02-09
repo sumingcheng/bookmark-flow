@@ -4,7 +4,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import type { Folder } from '@/services/db'
 import { useState } from 'react'
 import { useDrop } from 'react-dnd'
-import { FiEdit2, FiFolder, FiPlus, FiTrash2 } from 'react-icons/fi'
+import { FiEdit2, FiFolder, FiTrash2 } from 'react-icons/fi'
 
 interface FolderGridProps {
   folders: Folder[]
@@ -26,13 +26,9 @@ export function FolderGrid({
   return (
     <div className="h-2/5 min-h-[300px] bg-white border-b">
       <div className="h-full flex flex-col">
-        <div className="p-4 border-b">
-          <h2 className="text-xl font-bold text-gray-800">位置</h2>
-        </div>
-
         <ScrollArea className="flex-1">
           <div className="p-4">
-            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+            <div className="flex flex-wrap gap-3">
               {isLoading ? (
                 Array.from({ length: 6 }).map((_, index) => (
                   <div key={index} className="w-24 h-24 border rounded-lg p-4 flex flex-col items-center justify-center gap-2">
@@ -55,8 +51,8 @@ export function FolderGrid({
                     onClick={onAddFolder}
                     className="w-24 h-24 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
                   >
-                    <FiPlus size={20} />
-                    <span className="text-sm">新建位置</span>
+                    <FiFolder className="w-8 h-8" />
+                    <span className="text-sm">新建文件夹</span>
                   </button>
                 </>
               )}
@@ -77,7 +73,7 @@ interface FolderItemProps {
 
 function FolderItem({ folder, onDrop, onRename, onDelete }: FolderItemProps) {
   const [isEditing, setIsEditing] = useState(false)
-  const [newName, setNewName] = useState(folder.name)
+  const [editInput, setEditInput] = useState<HTMLInputElement | null>(null)
 
   const [{ isOver }, drop] = useDrop(() => ({
     accept: 'link',
@@ -87,11 +83,23 @@ function FolderItem({ folder, onDrop, onRename, onDelete }: FolderItemProps) {
     })
   }))
 
-  const handleRename = () => {
-    if (newName.trim() && newName.length <= 20) {
-      onRename(folder.id, newName.trim())
-      setIsEditing(false)
+  const handleStartEdit = () => {
+    setIsEditing(true)
+    // 等待 DOM 更新后聚焦并选中文本
+    setTimeout(() => {
+      if (editInput) {
+        editInput.value = folder.name
+        editInput.focus()
+        editInput.select()
+      }
+    }, 0)
+  }
+
+  const handleFinishEdit = () => {
+    if (editInput && editInput.value.trim() && editInput.value !== folder.name) {
+      onRename(folder.id, editInput.value.trim())
     }
+    setIsEditing(false)
   }
 
   return (
@@ -100,7 +108,7 @@ function FolderItem({ folder, onDrop, onRename, onDelete }: FolderItemProps) {
         <>
           <ContextMenuItem
             className="flex items-center px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-100 cursor-pointer"
-            onSelect={() => setIsEditing(true)}
+            onSelect={handleStartEdit}
           >
             <FiEdit2 className="mr-2" size={14} />
             重命名
@@ -121,27 +129,29 @@ function FolderItem({ folder, onDrop, onRename, onDelete }: FolderItemProps) {
           isOver ? 'bg-blue-50' : 'hover:bg-gray-50'
         }`}
       >
+        <FiFolder className="w-8 h-8 text-blue-500" />
         {isEditing ? (
           <input
+            ref={setEditInput}
             type="text"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            onBlur={handleRename}
-            onKeyDown={(e) => e.key === 'Enter' && handleRename()}
             className="w-full px-2 py-1 text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             maxLength={20}
-            autoFocus
+            onBlur={handleFinishEdit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleFinishEdit()
+              } else if (e.key === 'Escape') {
+                setIsEditing(false)
+              }
+            }}
           />
         ) : (
-          <>
-            <FiFolder className="w-8 h-8 text-blue-500" />
-            <span 
-              className="text-gray-700 text-center truncate w-full text-sm" 
-              onDoubleClick={() => setIsEditing(true)}
-            >
-              {folder.name}
-            </span>
-          </>
+          <span 
+            className="text-gray-700 text-center truncate w-full text-sm" 
+            onDoubleClick={handleStartEdit}
+          >
+            {folder.name}
+          </span>
         )}
       </div>
     </ContextMenuRoot>
