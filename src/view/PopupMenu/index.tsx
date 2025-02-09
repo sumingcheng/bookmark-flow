@@ -1,6 +1,5 @@
-import { Root, List, Item, Trigger } from '@radix-ui/react-navigation-menu'
+import { Item, List, Root, Trigger } from '@radix-ui/react-navigation-menu'
 import { FiBookmark, FiSettings } from 'react-icons/fi'
-import styles from './popup.module.scss'
 
 export function PopupMenu() {
   const openPage = (path: string) => {
@@ -13,14 +12,14 @@ export function PopupMenu() {
   }
 
   return (
-    <Root className={styles.root}>
-      <List className={styles.list}>
+    <Root className="w-64 bg-white font-sans overflow-hidden animate-in fade-in duration-200">
+      <List className="flex flex-col">
         <Item>
           <Trigger
-            onClick={() => openPage('/manager')}
-            className={styles.trigger}
+            onClick={() => openPage('/home')}
+            className="w-full flex items-center px-4 py-3 text-sm text-gray-700 transition-colors hover:bg-gray-50 border-b border-gray-100"
           >
-            <FiBookmark className={styles.icon} />
+            <FiBookmark className="w-4 h-4 mr-3" />
             <span>管理书签</span>
           </Trigger>
         </Item>
@@ -28,18 +27,17 @@ export function PopupMenu() {
         <Item>
           <Trigger
             onClick={() => openPage('/settings')}
-            className={styles.trigger}
+            className="w-full flex items-center px-4 py-3 text-sm text-gray-700 transition-colors hover:bg-gray-50"
           >
-            <FiSettings className={styles.icon} />
+            <FiSettings className="w-4 h-4 mr-3" />
             <span>设置</span>
           </Trigger>
         </Item>
       </List>
 
-      <div className={styles.footer}>
-        <div className={styles.brand}>
-          Bookmark Manager
-        </div>
+      <div className="py-2 px-4 bg-blue-50 flex items-center justify-center gap-2 text-xs text-blue-600">
+        <FiBookmark className="w-3.5 h-3.5" />
+        <span>Bookmark Manager</span>
       </div>
     </Root>
   )

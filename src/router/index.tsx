@@ -9,7 +9,7 @@ export const routes: RouteObject[] = [
     element: <PopupMenu />
   },
   {
-    path: '/manager',
+    path: '/home',
     element: <Home />
   },
   {
