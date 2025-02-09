@@ -17,6 +17,7 @@ export interface Folder {
   children: string[]
   links: string[]
   createdAt: number
+  order?: number
 }
 
 export class BookmarkDB extends Dexie {
@@ -25,10 +26,10 @@ export class BookmarkDB extends Dexie {
 
   constructor() {
     super('BookmarkDB')
-    
-    this.version(1).stores({
+
+    this.version(2).stores({
       links: 'id, name, url, createdAt, useCount',
-      folders: 'id, name, parentId'
+      folders: 'id, name, parentId, order'
     })
   }
 
@@ -68,19 +69,32 @@ export class BookmarkDB extends Dexie {
   }
 
   async getAllFolders() {
-    return await this.folders.toArray()
+    return await this.folders.orderBy('order').toArray()
   }
 
   async searchLinks(query: string) {
     const normalizedQuery = query.toLowerCase()
     return await this.links
-      .filter(link => 
+      .filter(link =>
         link.name.toLowerCase().includes(normalizedQuery) ||
         link.url.toLowerCase().includes(normalizedQuery) ||
         (link.notes && link.notes.toLowerCase().includes(normalizedQuery)) ||
         link.tags.some(tag => tag.toLowerCase().includes(normalizedQuery))
       )
       .toArray()
+  }
+
+  async updateFoldersOrder(folders: Folder[]) {
+    const updates = folders.map((folder, index) => ({
+      ...folder,
+      order: index
+    }))
+
+    return await this.transaction('rw', this.folders, async () => {
+      for (const folder of updates) {
+        await this.folders.update(folder.id, { order: folder.order })
+      }
+    })
   }
 }
 

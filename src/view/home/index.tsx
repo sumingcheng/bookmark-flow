@@ -101,7 +101,8 @@ export default function Home() {
         parentId,
         children: [],
         links: [],
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        order: folders.length
       }
       await db.addFolder(newFolder)
       setFolders(prev => [...prev, newFolder])
@@ -249,6 +250,30 @@ export default function Home() {
     }
   }, [handleAddLink])
 
+  // 在使用 FolderGrid 的组件中
+  const handleReorder = async (dragIndex: number, hoverIndex: number) => {
+    const newFolders = [...folders]
+    const [draggedFolder] = newFolders.splice(dragIndex, 1)
+    newFolders.splice(hoverIndex, 0, draggedFolder)
+    
+    // 更新所有受影响文件夹的 order
+    const updatedFolders = newFolders.map((folder, index) => ({
+      ...folder,
+      order: index
+    }))
+    
+    // 更新状态
+    setFolders(updatedFolders)
+    
+    // 保存到数据库
+    try {
+      await db.updateFoldersOrder(updatedFolders)
+    } catch (error) {
+      console.error('Failed to save folder order:', error)
+      toast.error('保存文件夹顺序失败')
+    }
+  }
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="flex flex-col h-screen bg-gray-50">
@@ -256,13 +281,14 @@ export default function Home() {
         <FolderGrid
           folders={folders
             .filter(folder => !folder.parentId)
-            .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))
+            .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
           }
           isLoading={isLoading}
           onAddFolder={() => handleAddFolder()}
           onRename={handleRename}
           onDelete={handleDeleteFolder}
           onDrop={handleDrop}
+          onReorder={handleReorder}
         />
 
         <LinkList

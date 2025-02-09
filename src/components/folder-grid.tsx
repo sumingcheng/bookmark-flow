@@ -3,7 +3,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Folder } from '@/services/db'
 import { useState } from 'react'
-import { useDrop } from 'react-dnd'
+import { useDrop, useDrag } from 'react-dnd'
 import { FiEdit2, FiFolder, FiTrash2 } from 'react-icons/fi'
 
 interface FolderGridProps {
@@ -13,6 +13,7 @@ interface FolderGridProps {
   onRename: (folderId: string, newName: string) => void
   onDelete: (folderId: string) => void
   onDrop: (folderId: string, linkId: string) => void
+  onReorder: (dragIndex: number, hoverIndex: number) => void
 }
 
 export function FolderGrid({
@@ -21,14 +22,15 @@ export function FolderGrid({
   onAddFolder,
   onRename,
   onDelete,
-  onDrop
+  onDrop,
+  onReorder
 }: FolderGridProps) {
   return (
     <div className="h-2/5 min-h-[300px] bg-white border-b">
       <div className="h-full flex flex-col">
         <ScrollArea className="flex-1">
           <div className="p-4">
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap items-center">
               {isLoading ? (
                 Array.from({ length: 6 }).map((_, index) => (
                   <div key={index} className="w-24 h-24 border rounded-lg p-4 flex flex-col items-center justify-center gap-2">
@@ -38,14 +40,19 @@ export function FolderGrid({
                 ))
               ) : (
                 <>
-                  {folders.map(folder => (
-                    <FolderItem
-                      key={folder.id}
-                      folder={folder}
-                      onDrop={onDrop}
-                      onRename={onRename}
-                      onDelete={onDelete}
-                    />
+                  <DragPlaceholder index={0} onReorder={onReorder} />
+                  {folders.map((folder, index) => (
+                    <div key={folder.id} className="flex items-center">
+                      <FolderItem
+                        folder={folder}
+                        index={index}
+                        onDrop={onDrop}
+                        onRename={onRename}
+                        onDelete={onDelete}
+                        onReorder={onReorder}
+                      />
+                      <DragPlaceholder index={index + 1} onReorder={onReorder} />
+                    </div>
                   ))}
                   <button
                     onClick={onAddFolder}
@@ -66,16 +73,26 @@ export function FolderGrid({
 
 interface FolderItemProps {
   folder: Folder
+  index: number
   onDrop: (folderId: string, linkId: string) => void
   onRename: (folderId: string, newName: string) => void
   onDelete: (folderId: string) => void
+  onReorder: (dragIndex: number, hoverIndex: number) => void
 }
 
-function FolderItem({ folder, onDrop, onRename, onDelete }: FolderItemProps) {
+function FolderItem({ folder, index, onDrop, onRename, onDelete, onReorder }: FolderItemProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editInput, setEditInput] = useState<HTMLInputElement | null>(null)
 
-  const [{ isOver }, drop] = useDrop(() => ({
+  const [{ isDragging }, dragRef] = useDrag(() => ({
+    type: 'folder',
+    item: { index },
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging()
+    })
+  }))
+
+  const [{ isOver }, dropRef] = useDrop(() => ({
     accept: 'link',
     drop: (item: { id: string }) => onDrop(folder.id, item.id),
     collect: monitor => ({
@@ -83,9 +100,13 @@ function FolderItem({ folder, onDrop, onRename, onDelete }: FolderItemProps) {
     })
   }))
 
+  const ref = (el: HTMLDivElement) => {
+    dragRef(el)
+    dropRef(el)
+  }
+
   const handleStartEdit = () => {
     setIsEditing(true)
-    // 等待 DOM 更新后聚焦并选中文本
     setTimeout(() => {
       if (editInput) {
         editInput.focus()
@@ -123,10 +144,11 @@ function FolderItem({ folder, onDrop, onRename, onDelete }: FolderItemProps) {
       }
     >
       <div
-        ref={drop}
+        ref={ref}
         className={`w-24 h-24 border rounded-lg p-3 flex flex-col items-center justify-center gap-2 transition-colors ${
           isOver ? 'bg-blue-50' : 'hover:bg-gray-50'
-        }`}
+        } ${isDragging ? 'opacity-50' : ''}`}
+        style={{ cursor: 'move' }}
       >
         <FiFolder className="w-8 h-8 text-blue-500" />
         {isEditing ? (
@@ -155,5 +177,29 @@ function FolderItem({ folder, onDrop, onRename, onDelete }: FolderItemProps) {
         )}
       </div>
     </ContextMenuRoot>
+  )
+}
+
+function DragPlaceholder({ index, onReorder }: { index: number; onReorder: (dragIndex: number, hoverIndex: number) => void }) {
+  const [{ isOver }, drop] = useDrop(() => ({
+    accept: 'folder',
+    hover: (item: { index: number }) => {
+      if (item.index !== index) {
+        onReorder(item.index, index)
+        item.index = index
+      }
+    },
+    collect: monitor => ({
+      isOver: monitor.isOver()
+    })
+  }))
+
+  return (
+    <div
+      ref={drop}
+      className={`w-2 h-24 transition-all ${
+        isOver ? 'w-4 bg-blue-200' : 'bg-transparent'
+      }`}
+    />
   )
 } 
