@@ -1,5 +1,7 @@
 import { FolderGrid } from '@/components/folder-grid'
 import { LinkList } from '@/components/link-list'
+import { NavBar } from '@/components/nav-bar'
+import { SearchDialog } from '@/components/search-dialog'
 import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog'
 import { importChromeBookmarks } from '@/services/bookmarks'
 import type { Folder, Link } from '@/services/db'
@@ -7,11 +9,10 @@ import { db } from '@/services/db'
 import { hotkeys } from '@/services/hotkeys'
 import { fetchPageTitle } from '@/utils/fetch-title'
 import { nanoid } from 'nanoid'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import toast from 'react-hot-toast'
-import { NavBar } from '@/components/nav-bar'
 
 export default function Home() {
   const [links, setLinks] = useState<Link[]>([])
@@ -21,6 +22,7 @@ export default function Home() {
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [allTags, setAllTags] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   // 加载初始数据
   useEffect(() => {
@@ -33,7 +35,8 @@ export default function Home() {
         ])
         setLinks(loadedLinks)
         setFolders(loadedFolders)
-      } catch (error) {
+      } catch (error: unknown) {
+        console.error('加载数据失败:', error)
         toast.error('加载数据失败')
       } finally {
         setIsLoading(false)
@@ -56,14 +59,13 @@ export default function Home() {
   }, [links])
 
   // 添加新链接
-  const handleAddLink = async (url: string) => {
+  const handleAddLink = useCallback(async (url: string) => {
     try {
-      // 尝试获取网页标题
       const title = await fetchPageTitle(url)
       
       const newLink: Link = {
         id: nanoid(),
-        name: title,
+        name: title || url,
         url,
         tags: [],
         createdAt: Date.now(),
@@ -72,20 +74,22 @@ export default function Home() {
       await db.addLink(newLink)
       setLinks(prev => [...prev, newLink])
       toast.success('添加链接成功')
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error('添加链接失败:', error)
       toast.error('添加链接失败')
     }
-  }
+  }, [])
 
   // 修改链接处理函数
   const handleSaveLink = async (updatedLink: Link) => {
     try {
       await db.updateLink(updatedLink.id, updatedLink)
-      setLinks(links.map(link => 
+      setLinks(prev => prev.map(link => 
         link.id === updatedLink.id ? updatedLink : link
       ))
       toast.success('更新链接成功')
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error('更新链接失败:', error)
       toast.error('更新链接失败')
     }
   }
@@ -209,7 +213,8 @@ export default function Home() {
       // 更新状态
       setLinks(prev => [...prev, ...bookmarks])
       toast.success(`成功导入 ${bookmarks.length} 个书签`)
-    } catch (error) {
+    } catch (error: unknown) {
+      console.error('导入书签失败:', error)
       toast.error('导入书签失败')
     }
   }
@@ -236,26 +241,26 @@ export default function Home() {
       shift: false,
       description: '新建链接',
       callback: () => {
-
-        const url = prompt('请输入链接地址')
+        const url = window.prompt('请输入链接地址')
         if (url) handleAddLink(url)
       }
     })
 
+    // 添加搜索框快捷键
     hotkeys.registerShortcut({
       key: 'f',
       ctrl: true,
       alt: true,
       shift: false,
-      description: '新建文件夹',
-      callback: () => handleAddFolder()
+      description: '打开搜索',
+      callback: () => setIsSearchOpen(true)
     })
 
     return () => {
       hotkeys.unregisterShortcut('n')
       hotkeys.unregisterShortcut('f')
     }
-  }, [])
+  }, [handleAddLink])
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -291,6 +296,7 @@ export default function Home() {
           onImport={handleImportBookmarks}
           onEdit={setEditingLink}
           onDelete={handleDeleteLink}
+          onLinkClick={handleLinkClick}
         />
 
         <LinkEditDialog
@@ -298,6 +304,13 @@ export default function Home() {
           isOpen={!!editingLink}
           onClose={() => setEditingLink(null)}
           onSave={handleSaveLink}
+        />
+        
+        {/* 添加搜索框组件 */}
+        <SearchDialog 
+          isOpen={isSearchOpen}
+          onClose={() => setIsSearchOpen(false)}
+          onLinkClick={handleLinkClick}
         />
       </div>
     </DndProvider>

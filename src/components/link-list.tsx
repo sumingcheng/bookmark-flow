@@ -11,9 +11,12 @@ interface LinkListProps {
   isLoading: boolean
   sortBy: 'createdAt' | 'useCount'
   onSortChange: (sort: 'createdAt' | 'useCount') => void
-  onImport: () => void
-  onEdit: (link: Link) => void
-  onDelete: (id: string) => void
+  onTagSelect: (tag: string) => void
+  onTagsClear: () => void
+  onImport: () => Promise<void>
+  onEdit: (link: Link | null) => void
+  onDelete: (linkId: string) => Promise<void>
+  onLinkClick: (linkId: string) => Promise<void>
 }
 
 export function LinkList({
@@ -21,9 +24,12 @@ export function LinkList({
   isLoading,
   sortBy,
   onSortChange,
+  onTagSelect,
+  onTagsClear,
   onImport,
   onEdit,
-  onDelete
+  onDelete,
+  onLinkClick
 }: LinkListProps) {
   return (
     <div className="flex-1 bg-white">
@@ -67,6 +73,7 @@ export function LinkList({
                       link={link}
                       onEdit={onEdit}
                       onDelete={onDelete}
+                      onLinkClick={onLinkClick}
                     />
                   ))
                 ) : (
@@ -93,7 +100,17 @@ export function LinkList({
   )
 }
 
-function LinkItem({ link, onEdit, onDelete }: { link: Link; onEdit: (link: Link) => void; onDelete: (id: string) => void }) {
+function LinkItem({ 
+  link, 
+  onEdit, 
+  onDelete,
+  onLinkClick 
+}: { 
+  link: Link
+  onEdit: (link: Link) => void
+  onDelete: (id: string) => void
+  onLinkClick: (linkId: string) => Promise<void>
+}) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'link',
     item: { id: link.id },
@@ -101,6 +118,12 @@ function LinkItem({ link, onEdit, onDelete }: { link: Link; onEdit: (link: Link)
       isDragging: monitor.isDragging()
     })
   }))
+
+  const handleClick = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    await onLinkClick(link.id)
+    window.open(link.url, '_blank')
+  }
 
   return (
     <TooltipProvider>
@@ -115,7 +138,9 @@ function LinkItem({ link, onEdit, onDelete }: { link: Link; onEdit: (link: Link)
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="font-medium text-gray-800 truncate max-w-[400px]">
-                    {link.name}
+                    <div onClick={handleClick}>
+                      {link.name}
+                    </div>
                   </div>
                 </TooltipTrigger>
                 <TooltipContent side="top">{link.name}</TooltipContent>

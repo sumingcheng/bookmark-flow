@@ -6,9 +6,10 @@ import { debounce } from 'lodash-es'
 interface SearchDialogProps {
   isOpen: boolean
   onClose: () => void
+  onLinkClick: (linkId: string) => Promise<void>
 }
 
-export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
+export function SearchDialog({ isOpen, onClose, onLinkClick }: SearchDialogProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [results, setResults] = useState<Link[]>([])
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -58,7 +59,7 @@ export function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
   }
 
   const handleLinkClick = async (link: Link) => {
-    await db.incrementLinkUseCount(link.id)
+    await onLinkClick(link.id)
     window.open(link.url, '_blank')
     onClose()
   }
