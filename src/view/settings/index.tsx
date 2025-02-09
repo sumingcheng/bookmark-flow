@@ -2,14 +2,16 @@ import { db } from '@/services/db'
 import { hotkeys } from '@/services/hotkeys'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { FiDownload, FiUpload } from 'react-icons/fi'
+import { FiDownload, FiUpload, FiTrash2 } from 'react-icons/fi'
 import type { ShortcutKeys } from '@/services/hotkeys'
 import { NavBar } from '@/components/nav-bar'
 import { cn } from '@/lib/utils'
+import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog'
 
 export default function Settings() {
   const [shortcut, setShortcut] = useState<ShortcutKeys>(hotkeys.getShortcut())
   const [isRecording, setIsRecording] = useState(false)
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
 
   // 处理快捷键记录
   const handleKeyDown = async (e: React.KeyboardEvent) => {
@@ -128,6 +130,20 @@ export default function Settings() {
     e.target.value = ''
   }
 
+  // 清除所有数据
+  const handleClearAll = async () => {
+    try {
+      await Promise.all([
+        db.links.clear(),
+        db.folders.clear()
+      ])
+      toast.success('所有数据已清除')
+      setShowClearConfirm(false)
+    } catch (error) {
+      toast.error('清除数据失败')
+    }
+  }
+
   return (
     <div className="min-h-full h-full bg-gray-50">
       <NavBar />
@@ -224,12 +240,53 @@ export default function Settings() {
                 onChange={handleImport}
               />
             </label>
+            <button
+              onClick={() => setShowClearConfirm(true)}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors",
+                "bg-red-500 text-white hover:bg-red-600"
+              )}
+            >
+              <FiTrash2 className="h-4 w-4" />
+              清除全部数据
+            </button>
           </div>
           <p className="mt-3 text-sm text-amber-600">
-            注意：导入新配置会覆盖现有的所有数据，请提前备份重要信息
+            注意：导入新配置或清除数据都会删除现有的所有数据，请提前备份重要信息
           </p>
         </div>
       </div>
+
+      {/* 清除确认对话框 */}
+      <Dialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <DialogContent>
+          <DialogHeader className="font-medium">确认清除全部数据？</DialogHeader>
+          <div className="py-4">
+            <p className="text-gray-500">
+              此操作将永久删除所有书签、文件夹和标签数据，且无法恢复。
+            </p>
+            <p className="mt-2 text-amber-600 font-medium">
+              建议在清除前先导出备份。
+            </p>
+          </div>
+          <div className="flex justify-end mt-4">
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowClearConfirm(false)}
+                className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                取消
+              </button>
+              <button
+                onClick={handleClearAll}
+                className="px-4 py-2 text-sm font-medium bg-red-500 text-white hover:bg-red-600 rounded-md transition-colors"
+              >
+                确认清除
+              </button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
