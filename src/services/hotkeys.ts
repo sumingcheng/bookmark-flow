@@ -31,14 +31,13 @@ export class HotkeysManager {
   }
 
   async init() {
-    // 从存储中加载快捷键设置
     try {
+      // 从 chrome.storage.sync 中读取，键名为 'shortcut'
       const stored = await chrome.storage.sync.get('shortcut')
-      if (stored.shortcut) {
-        this.shortcut = stored.shortcut
-      }
+      return stored.shortcut || DEFAULT_SHORTCUT
     } catch (error) {
       console.error('Failed to load shortcut settings:', error)
+      return DEFAULT_SHORTCUT
     }
   }
 
@@ -53,6 +52,7 @@ export class HotkeysManager {
   async updateShortcut(newShortcut: ShortcutCommand) {
     this.shortcut = newShortcut
     try {
+      // 存储到 chrome.storage.sync 中，键名为 'shortcut'
       await chrome.storage.sync.set({ shortcut: newShortcut })
     } catch (error) {
       console.error('Failed to save shortcut settings:', error)

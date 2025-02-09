@@ -54,6 +54,13 @@ export default function Settings() {
         description: '打开搜索',
         callback: () => {}
       })
+      
+      // 发送消息给 background 脚本更新快捷键
+      await chrome.runtime.sendMessage({
+        type: 'UPDATE_SHORTCUT',
+        shortcut: newShortcut
+      })
+      
       toast.success('快捷键已更新')
     } catch (error) {
       toast.error('保存快捷键失败')
