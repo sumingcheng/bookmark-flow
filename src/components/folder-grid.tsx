@@ -88,7 +88,6 @@ function FolderItem({ folder, onDrop, onRename, onDelete }: FolderItemProps) {
     // 等待 DOM 更新后聚焦并选中文本
     setTimeout(() => {
       if (editInput) {
-        editInput.value = folder.name
         editInput.focus()
         editInput.select()
       }
@@ -134,7 +133,8 @@ function FolderItem({ folder, onDrop, onRename, onDelete }: FolderItemProps) {
           <input
             ref={setEditInput}
             type="text"
-            className="w-full px-2 py-1 text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+            defaultValue={folder.name}
+            className="w-full px-2 py-1 text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm text-gray-700"
             maxLength={20}
             onBlur={handleFinishEdit}
             onKeyDown={(e) => {
