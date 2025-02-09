@@ -42,7 +42,7 @@
       "description": "快速搜索书签"
     }
   },
-  "author": "Your Name",
+  "author": "素明诚",
   "homepage_url": "https://github.com/yourusername/bookmark-manager",
   "minimum_chrome_version": "88",
   "offline_enabled": true,
