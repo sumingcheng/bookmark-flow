@@ -73,12 +73,12 @@ export function SearchDialog({ isOpen, onClose, onLinkClick }: SearchDialogProps
         onKeyDown={handleKeyDown}
       >
         {/* 搜索输入框 */}
-        <div className="flex items-center p-4 border-b">
+        <div className="flex items-center p-4">
           <FiSearch className="text-gray-400 mr-3" size={20} />
           <input
             type="text"
             className="flex-1 outline-none text-lg"
-            placeholder="搜索链接..."
+            placeholder="输入书签名称或者网址..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             autoFocus

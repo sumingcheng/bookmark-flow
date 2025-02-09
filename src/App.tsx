@@ -6,7 +6,7 @@ import { SearchDialog } from '@/components/search-dialog'
 import { hotkeys } from '@/services/hotkeys'
 import { db } from '@/services/db'
 
-export default function App() {
+function App() {
   const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   const handleLinkClick = async (linkId: string) => {
@@ -20,7 +20,7 @@ export default function App() {
   useEffect(() => {
     // 初始化快捷键管理器
     hotkeys.init().then(() => {
-      hotkeys.setCallback(() => setIsSearchOpen(true))
+      hotkeys.setSearchCallback(() => setIsSearchOpen(true))
       hotkeys.enable()
     })
 
@@ -46,3 +46,5 @@ export default function App() {
     </div>
   )
 }
+
+export default App

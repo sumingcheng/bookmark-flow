@@ -206,12 +206,19 @@ export default function Home() {
   // 导入书签
   const handleImportBookmarks = async () => {
     try {
-      const bookmarks = await importChromeBookmarks()
+      const { links: importedLinks, folders: importedFolders } = await importChromeBookmarks()
+      
       // 批量添加到数据库
-      await Promise.all(bookmarks.map(link => db.addLink(link)))
+      await Promise.all([
+        ...importedLinks.map(link => db.addLink(link)),
+        ...importedFolders.map(folder => db.addFolder(folder))
+      ])
+
       // 更新状态
-      setLinks(prev => [...prev, ...bookmarks])
-      toast.success(`成功导入 ${bookmarks.length} 个书签`)
+      setLinks(prev => [...prev, ...importedLinks])
+      setFolders(prev => [...prev, ...importedFolders])
+      
+      toast.success(`成功导入 ${importedLinks.length} 个书签，${importedFolders.length} 个文件夹`)
     } catch (error: unknown) {
       console.error('导入书签失败:', error)
       toast.error('导入书签失败')

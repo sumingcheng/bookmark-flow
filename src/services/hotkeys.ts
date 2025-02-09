@@ -1,5 +1,3 @@
-import { db } from './db'
-
 export interface ShortcutKeys {
   ctrl: boolean
   alt: boolean
@@ -18,7 +16,7 @@ const DEFAULT_SHORTCUT: ShortcutCommand = {
   alt: true,
   shift: false,
   description: '默认快捷键',
-  callback: () => {}
+  callback: () => { }
 }
 
 export class HotkeysManager {
@@ -46,6 +44,10 @@ export class HotkeysManager {
 
   setCallback(callback: () => void) {
     this.callback = callback
+  }
+
+  setSearchCallback(callback: () => void) {
+    this.searchCallback = callback
   }
 
   async updateShortcut(newShortcut: ShortcutCommand) {
