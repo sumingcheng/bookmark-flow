@@ -8,10 +8,11 @@
     "storage",
     "commands",
     "tabs",
-    "contextMenus"
+    "activeTab",
+    "contextMenus",
+    "scripting"
   ],
   "action": {
-    "default_popup": "index.html#/popup",
     "default_icon": {
       "16": "icons/kpbl.png",
       "32": "icons/kpbl.png",
@@ -59,6 +60,13 @@
       "matches": [
         "<all_urls>"
       ]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "css": ["content.css"]
     }
   ]
 }

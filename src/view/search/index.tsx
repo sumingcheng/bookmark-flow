@@ -2,7 +2,7 @@ import { SearchDialog } from '@/components/search-dialog'
 import { db } from '@/services/db'
 import { useEffect } from 'react'
 
-export default function SearchPage() {
+function SearchPage() {
   useEffect(() => {
     // 设置窗口标题
     document.title = '搜索书签'
@@ -19,3 +19,5 @@ export default function SearchPage() {
     />
   )
 } 
+
+export default SearchPage

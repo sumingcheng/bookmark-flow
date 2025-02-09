@@ -28,15 +28,33 @@ chrome.runtime.onInstalled.addListener(() => {
 })
 
 // 监听快捷键命令
-chrome.commands.onCommand.addListener((command) => {
-  if (command === 'quick_search' || command === '_execute_action') {
-    chrome.windows.create({
-      url: 'index.html#/search',
-      type: 'popup',
-      width: 800,
-      height: 600,
-      focused: true,
-    });
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command === "quick_search") {
+    try {
+      // 获取当前活动标签页
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      
+      // 注入内容脚本（如果尚未注入）
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content.js']
+        });
+        
+        await chrome.scripting.insertCSS({
+          target: { tabId: tab.id },
+          files: ['content.css']
+        });
+      } catch (e) {
+        // 如果脚本已经注入，会抛出错误，我们可以忽略它
+        console.log('Script might already be injected');
+      }
+
+      // 发送消息
+      await chrome.tabs.sendMessage(tab.id, { action: "toggleSearchPopup" });
+    } catch (error) {
+      console.error('Error:', error);
+    }
   }
 });
 
