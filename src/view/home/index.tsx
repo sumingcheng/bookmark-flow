@@ -1,3 +1,11 @@
+import { Badge } from '@/components/ui/badge'
+import { ContextMenuItem, ContextMenuRoot } from '@/components/ui/context-menu'
+import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import { Separator } from '@/components/ui/separator'
+import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { importChromeBookmarks } from '@/services/bookmarks'
 import type { Folder, Link } from '@/services/db'
 import { db } from '@/services/db'
 import { hotkeys } from '@/services/hotkeys'
@@ -7,13 +15,7 @@ import { useEffect, useState } from 'react'
 import { DndProvider, useDrag, useDrop } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
 import toast from 'react-hot-toast'
-import { FiEdit2, FiFilter, FiFolder, FiLink, FiPlus, FiTrash2 } from 'react-icons/fi'
-import { Dialog, DialogContent, DialogHeader } from '@/components/ui/dialog'
-import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
+import { FiDownload, FiEdit2, FiFilter, FiFolder, FiLink, FiPlus, FiTrash2 } from 'react-icons/fi'
 
 // 添加拖拽类型常量
 const ItemTypes = {
@@ -32,11 +34,13 @@ export default function Home() {
   const [editingLink, setEditingLink] = useState<Link | null>(null)
   const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [allTags, setAllTags] = useState<string[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
   // 加载初始数据
   useEffect(() => {
     const loadData = async () => {
       try {
+        setIsLoading(true)
         const [loadedLinks, loadedFolders] = await Promise.all([
           db.getAllLinks(),
           db.getAllFolders()
@@ -45,6 +49,8 @@ export default function Home() {
         setFolders(loadedFolders)
       } catch (error) {
         toast.error('加载数据失败')
+      } finally {
+        setIsLoading(false)
       }
     }
     loadData()
@@ -209,6 +215,20 @@ export default function Home() {
     }
   }
 
+  // 导入书签
+  const handleImportBookmarks = async () => {
+    try {
+      const bookmarks = await importChromeBookmarks()
+      // 批量添加到数据库
+      await Promise.all(bookmarks.map(link => db.addLink(link)))
+      // 更新状态
+      setLinks(prev => [...prev, ...bookmarks])
+      toast.success(`成功导入 ${bookmarks.length} 个书签`)
+    } catch (error) {
+      toast.error('导入书签失败')
+    }
+  }
+
   const sortedLinks = [...links].sort((a, b) => {
     if (sortBy === 'createdAt') {
       return b.createdAt - a.createdAt
@@ -255,23 +275,68 @@ export default function Home() {
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="flex flex-col h-screen bg-gray-50">
-        {/* 主内容区域 */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* 左侧链接库 */}
-          <div className="w-1/2 flex flex-col h-full border-r bg-white">
+        {/* 文件夹区域 (上方) */}
+        <div className="h-2/5 min-h-[300px] bg-white border-b">
+          <div className="h-full flex flex-col">
+            <div className="p-4 border-b">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-800">位置</h2>
+                <button
+                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                  onClick={() => handleAddFolder()}
+                >
+                  <FiPlus /> 新建
+                </button>
+              </div>
+            </div>
+
+            <ScrollArea className="flex-1">
+              <div className="p-4">
+                <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  {isLoading ? (
+                    // 骨架屏
+                    Array.from({ length: 6 }).map((_, index) => (
+                      <div key={index} className="aspect-square border rounded-lg p-4 flex flex-col items-center justify-center gap-2">
+                        <Skeleton className="h-12 w-12 rounded-full" />
+                        <Skeleton className="h-4 w-24" />
+                      </div>
+                    ))
+                  ) : folders.filter(folder => !folder.parentId).length > 0 ? (
+                    folders
+                      .filter(folder => !folder.parentId)
+                      .map(folder => (
+                        <FolderItem
+                          key={folder.id}
+                          folder={folder}
+                          folders={folders}
+                          level={0}
+                          onDrop={handleDrop}
+                          onRename={handleRename}
+                          onDelete={handleDeleteFolder}
+                        />
+                      ))
+                  ) : (
+                    <button
+                      onClick={() => handleAddFolder()}
+                      className="aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 text-gray-400 hover:text-gray-600 hover:border-gray-400 transition-colors"
+                    >
+                      <FiPlus size={24} />
+                      <span>点击创建新位置</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </ScrollArea>
+          </div>
+        </div>
+
+        {/* 链接库区域 (下方) */}
+        <div className="flex-1 bg-white">
+          <div className="h-full flex flex-col">
             <div className="p-4 border-b">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-800">链接库</h2>
                 <div className="flex gap-2">
-                  <button
-                    className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
-                    onClick={() => {
-                      const url = prompt('请输入链接地址')
-                      if (url) handleAddLink(url)
-                    }}
-                  >
-                    <FiPlus /> 新建链接
-                  </button>
                   <button
                     className={`px-3 py-1.5 rounded-md transition-colors ${
                       sortBy === 'createdAt' 
@@ -292,13 +357,19 @@ export default function Home() {
                   >
                     按使用频率
                   </button>
+                  <button
+                    className="flex items-center gap-1 px-3 py-1.5 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+                    onClick={handleImportBookmarks}
+                  >
+                    <FiDownload /> 导入书签
+                  </button>
                 </div>
               </div>
 
               {/* 标签过滤器 */}
               {allTags.length > 0 && (
-                <div className="mb-2">
-                  <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
                     <FiFilter className="text-gray-500" />
                     <span className="text-sm font-medium text-gray-600">标签过滤</span>
                   </div>
@@ -335,51 +406,34 @@ export default function Home() {
               )}
             </div>
 
-            {/* 链接列表 */}
             <ScrollArea className="flex-1">
               <div className="p-4 space-y-2">
-                {filteredLinks.map(link => (
-                  <LinkItem
-                    key={link.id}
-                    link={link}
-                    onEdit={setEditingLink}
-                    onDelete={handleDeleteLink}
-                  />
-                ))}
-              </div>
-            </ScrollArea>
-          </div>
-
-          {/* 右侧文件夹区域 */}
-          <div className="w-1/2 flex flex-col h-full bg-white">
-            <div className="p-4 border-b">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-xl font-bold text-gray-800">文件夹</h2>
-                <button
-                  className="flex items-center gap-1 px-3 py-1.5 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
-                  onClick={() => handleAddFolder()}
-                >
-                  <FiPlus /> 新建文件夹
-                </button>
-              </div>
-            </div>
-
-            {/* 文件夹列表 */}
-            <ScrollArea className="flex-1">
-              <div className="p-4 space-y-2">
-                {folders
-                  .filter(folder => !folder.parentId)
-                  .map(folder => (
-                    <FolderItem
-                      key={folder.id}
-                      folder={folder}
-                      folders={folders}
-                      level={0}
-                      onDrop={handleDrop}
-                      onRename={handleRename}
-                      onDelete={handleDeleteFolder}
+                {isLoading ? (
+                  // 骨架屏
+                  Array.from({ length: 5 }).map((_, index) => (
+                    <div key={index} className="flex items-center gap-3 p-3 border rounded-lg">
+                      <Skeleton className="h-5 w-5" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
+                      <Skeleton className="h-6 w-16" />
+                    </div>
+                  ))
+                ) : filteredLinks.length > 0 ? (
+                  filteredLinks.map(link => (
+                    <LinkItem
+                      key={link.id}
+                      link={link}
+                      onEdit={setEditingLink}
+                      onDelete={handleDeleteLink}
                     />
-                  ))}
+                  ))
+                ) : (
+                  <div className="text-center text-gray-500 py-8">
+                    暂无链接
+                  </div>
+                )}
               </div>
             </ScrollArea>
           </div>
@@ -524,10 +578,8 @@ function FolderItem({
   onRename: (folderId: string, newName: string) => void
   onDelete: (folderId: string) => void
 }) {
-  const [isOpen, setIsOpen] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [newName, setNewName] = useState(folder.name)
-  const childFolders = folders.filter(f => f.parentId === folder.id)
 
   const [{ isOver }, drop] = useDrop(() => ({
     accept: ItemTypes.LINK,
@@ -547,13 +599,32 @@ function FolderItem({
   }
 
   return (
-    <div
-      ref={drop}
-      style={{ marginLeft: `${level * 16}px` }}
-      className={`transition-colors ${isOver ? 'bg-blue-50' : ''}`}
+    <ContextMenuRoot
+      content={
+        <>
+          <ContextMenuItem
+            className="flex items-center px-2 py-1.5 text-sm text-gray-600 hover:bg-gray-100 cursor-pointer"
+            onSelect={() => setIsEditing(true)}
+          >
+            <FiEdit2 className="mr-2" size={14} />
+            重命名
+          </ContextMenuItem>
+          <ContextMenuItem
+            className="flex items-center px-2 py-1.5 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
+            onSelect={() => onDelete(folder.id)}
+          >
+            <FiTrash2 className="mr-2" size={14} />
+            删除
+          </ContextMenuItem>
+        </>
+      }
     >
-      <div className="flex items-center gap-2 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-        <FiFolder className="text-gray-400 flex-shrink-0" />
+      <div
+        ref={drop}
+        className={`w-24 h-24 border rounded-lg p-3 flex flex-col items-center justify-center gap-2 transition-colors ${
+          isOver ? 'bg-blue-50' : 'hover:bg-gray-50'
+        }`}
+      >
         {isEditing ? (
           <input
             type="text"
@@ -561,61 +632,23 @@ function FolderItem({
             onChange={(e) => setNewName(e.target.value)}
             onBlur={handleRename}
             onKeyDown={(e) => e.key === 'Enter' && handleRename()}
-            className="flex-1 px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-2 py-1 text-center border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
             maxLength={20}
             autoFocus
           />
         ) : (
           <>
+            <FiFolder className="w-8 h-8 text-blue-500" />
             <span 
-              className="flex-1 text-gray-700 truncate" 
+              className="text-gray-700 text-center truncate w-full text-sm" 
               onDoubleClick={() => setIsEditing(true)}
             >
               {folder.name}
             </span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button className="p-1.5 text-gray-400 hover:text-gray-600 rounded-md transition-colors">
-                  •••
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem onSelect={() => setIsEditing(true)}>
-                  <FiEdit2 className="mr-2" size={14} />
-                  重命名
-                </DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setIsOpen(!isOpen)}>
-                  <FiFolder className="mr-2" size={14} />
-                  {isOpen ? '收起' : '展开'}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => onDelete(folder.id)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <FiTrash2 className="mr-2" size={14} />
-                  删除
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
           </>
         )}
       </div>
-      {isOpen && childFolders.length > 0 && (
-        <div className="mt-2 space-y-2">
-          {childFolders.map(childFolder => (
-            <FolderItem
-              key={childFolder.id}
-              folder={childFolder}
-              folders={folders}
-              level={level + 1}
-              onDrop={onDrop}
-              onRename={onRename}
-              onDelete={onDelete}
-            />
-          ))}
-        </div>
-      )}
-    </div>
+    </ContextMenuRoot>
   )
 }
 

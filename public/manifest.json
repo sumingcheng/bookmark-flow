@@ -1,0 +1,7 @@
+{
+  "permissions": [
+    "bookmarks",
+    "storage"
+  ],
+  // ... 其他配置保持不变
+} 
